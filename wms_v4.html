@@ -1,0 +1,1188 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>WMS 仓储管理系统</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@300;400;500;700&family=JetBrains+Mono:wght@400;600&display=swap');
+
+:root {
+  --bg: #0f1117;
+  --surface: #1a1d27;
+  --surface2: #22263a;
+  --border: #2e3350;
+  --accent: #4f8cff;
+  --accent2: #00e5b0;
+  --warn: #ffb84f;
+  --danger: #ff5f6d;
+  --text: #e8eaf6;
+  --text2: #8891b4;
+  --text3: #4a5080;
+  --radius: 14px;
+  --shadow: 0 4px 24px rgba(0,0,0,0.4);
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+
+body {
+  font-family: 'Noto Sans SC', sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  min-height: 100vh;
+  max-width: 480px;
+  margin: 0 auto;
+  padding-bottom: 80px;
+}
+
+/* ── Header ── */
+.header {
+  background: var(--surface);
+  border-bottom: 1px solid var(--border);
+  padding: 14px 16px 10px;
+  position: sticky; top: 0; z-index: 100;
+}
+.header-top { display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px; }
+.logo { font-family: 'JetBrains Mono', monospace; font-size: 13px; font-weight: 600; color: var(--accent); letter-spacing: 2px; }
+.logo span { color: var(--accent2); }
+.stats-row { display: flex; gap: 8px; flex-wrap: wrap; }
+.stat-chip { background: var(--surface2); border: 1px solid var(--border); border-radius: 20px; padding: 3px 10px; font-size: 11px; color: var(--text2); }
+.stat-chip b { color: var(--accent2); font-weight: 600; }
+
+/* ── Bottom Nav ── */
+.bottom-nav {
+  position: fixed; bottom: 0; left: 0; right: 0;
+  max-width: 480px; margin: 0 auto;
+  background: var(--surface); border-top: 1px solid var(--border);
+  display: flex; z-index: 100;
+}
+.nav-item { flex: 1; padding: 8px 4px 12px; text-align: center; cursor: pointer; user-select: none; }
+.nav-icon { font-size: 19px; display: block; }
+.nav-label { font-size: 10px; color: var(--text3); margin-top: 2px; }
+.nav-item.active .nav-label { color: var(--accent); }
+
+/* ── Pages ── */
+.page { display: none; padding: 14px; }
+.page.active { display: block; }
+
+/* ── Section title ── */
+.section-title {
+  font-size: 11px; font-weight: 500; letter-spacing: 2px;
+  text-transform: uppercase; color: var(--text3);
+  margin: 18px 0 10px;
+  font-family: 'JetBrains Mono', monospace;
+}
+.section-title:first-child { margin-top: 0; }
+
+/* ── Cards ── */
+.card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 14px; margin-bottom: 10px; }
+.card-header { display: flex; align-items: flex-start; justify-content: space-between; margin-bottom: 10px; }
+.item-name { font-size: 15px; font-weight: 500; color: var(--text); line-height: 1.3; flex: 1; }
+.item-style { font-family: 'JetBrains Mono', monospace; font-size: 11px; color: var(--text3); margin-top: 3px; }
+.location-badge { background: var(--accent); color: #fff; font-family: 'JetBrains Mono', monospace; font-size: 13px; font-weight: 600; padding: 4px 10px; border-radius: 8px; white-space: nowrap; margin-left: 10px; }
+.card-meta { display: flex; gap: 6px; flex-wrap: wrap; }
+.meta-tag { background: var(--surface2); border: 1px solid var(--border); border-radius: 6px; padding: 3px 8px; font-size: 11px; color: var(--text2); }
+.meta-tag.qty { color: var(--accent2); border-color: rgba(0,229,176,0.3); }
+.meta-tag.warn { color: var(--warn); border-color: rgba(255,184,79,0.3); }
+.meta-tag.in { color: #a78bfa; border-color: rgba(167,139,250,0.3); }
+.card-actions { display: flex; gap: 8px; margin-top: 12px; flex-wrap: wrap; }
+
+/* ── Inputs ── */
+.input-group { margin-bottom: 12px; }
+.input-label { font-size: 11px; color: var(--text2); margin-bottom: 6px; display: block; letter-spacing: 0.5px; }
+input, select, textarea {
+  width: 100%; background: var(--surface2); border: 1px solid var(--border);
+  border-radius: 10px; padding: 11px 14px; font-size: 14px; color: var(--text);
+  font-family: 'Noto Sans SC', sans-serif; outline: none; transition: border-color 0.2s;
+  -webkit-appearance: none;
+}
+input:focus, select:focus, textarea:focus { border-color: var(--accent); }
+input::placeholder { color: var(--text3); }
+select option { background: var(--surface2); }
+
+/* ── Buttons ── */
+.btn {
+  display: inline-flex; align-items: center; justify-content: center; gap: 6px;
+  padding: 10px 14px; border-radius: 10px; font-size: 13px; font-weight: 500;
+  cursor: pointer; border: none; font-family: 'Noto Sans SC', sans-serif;
+  transition: all 0.15s; user-select: none; white-space: nowrap;
+}
+.btn:active { transform: scale(0.96); }
+.btn-primary { background: var(--accent); color: #fff; flex: 1; }
+.btn-success { background: rgba(0,229,176,0.15); color: var(--accent2); border: 1px solid rgba(0,229,176,0.3); }
+.btn-danger { background: rgba(255,95,109,0.12); color: var(--danger); border: 1px solid rgba(255,95,109,0.25); }
+.btn-ghost { background: var(--surface2); color: var(--text2); border: 1px solid var(--border); }
+.btn-purple { background: rgba(167,139,250,0.15); color: #a78bfa; border: 1px solid rgba(167,139,250,0.3); }
+.btn-full { width: 100%; padding: 13px; font-size: 15px; border-radius: 12px; }
+
+/* ── Search ── */
+.search-wrap { position: relative; margin-bottom: 12px; }
+.search-wrap input { padding-left: 40px; }
+.search-icon { position: absolute; left: 14px; top: 50%; transform: translateY(-50%); color: var(--text3); font-size: 16px; pointer-events: none; }
+
+/* ── Find result ── */
+.order-result {
+  background: linear-gradient(135deg, rgba(79,140,255,0.08), rgba(0,229,176,0.06));
+  border: 1px solid rgba(79,140,255,0.3);
+  border-radius: var(--radius); padding: 14px; margin-bottom: 10px;
+}
+.location-big { font-family: 'JetBrains Mono', monospace; font-size: 28px; font-weight: 600; color: var(--accent); text-align: center; padding: 10px 0 6px; letter-spacing: 3px; }
+.location-label { text-align: center; font-size: 11px; color: var(--text3); letter-spacing: 1px; text-transform: uppercase; margin-bottom: 10px; }
+.qty-input-row { display: flex; align-items: center; gap: 8px; margin-top: 10px; }
+.qty-input-row input { width: 80px; text-align: center; font-family: 'JetBrains Mono', monospace; font-size: 16px; }
+
+/* ── Order mode ── */
+.order-mode-bar {
+  background: var(--surface2); border: 1px solid var(--border);
+  border-radius: var(--radius); padding: 12px 14px; margin-bottom: 12px;
+  display: flex; align-items: center; gap: 10px;
+}
+.order-badge { background: var(--accent); color: #fff; border-radius: 6px; padding: 2px 8px; font-size: 11px; font-weight: 600; font-family: 'JetBrains Mono', monospace; }
+.order-items-count { font-size: 12px; color: var(--text2); flex: 1; }
+.order-item-row { display: flex; align-items: center; gap: 8px; padding: 8px 0; border-bottom: 1px solid var(--border); }
+.order-item-row:last-child { border-bottom: none; }
+.order-item-name { flex: 1; font-size: 13px; }
+.order-item-loc { font-family: 'JetBrains Mono', monospace; font-size: 12px; color: var(--accent); background: rgba(79,140,255,0.1); padding: 2px 7px; border-radius: 5px; }
+.order-item-qty { font-size: 12px; color: var(--text2); }
+
+/* ── Log ── */
+.log-filter-row { display: flex; gap: 8px; margin-bottom: 12px; }
+.log-filter-row select { flex: 1; }
+.log-entry { display: flex; align-items: flex-start; gap: 10px; padding: 10px 0; border-bottom: 1px solid var(--border); }
+.log-entry:last-child { border-bottom: none; }
+.log-dot { width: 8px; height: 8px; border-radius: 50%; margin-top: 5px; flex-shrink: 0; }
+.log-dot.out { background: var(--accent2); }
+.log-dot.in { background: #a78bfa; }
+.log-content { flex: 1; }
+.log-title { font-size: 13px; color: var(--text); }
+.log-meta { font-size: 11px; color: var(--text3); margin-top: 3px; font-family: 'JetBrains Mono', monospace; }
+.log-type { font-size: 10px; padding: 1px 6px; border-radius: 4px; margin-left: 6px; }
+.log-type.out { background: rgba(0,229,176,0.15); color: var(--accent2); }
+.log-type.in { background: rgba(167,139,250,0.15); color: #a78bfa; }
+
+/* ── Print sheet ── */
+.print-preview {
+  background: #fff; color: #111; border-radius: 10px;
+  padding: 20px; margin-bottom: 12px;
+  border: 1px solid var(--border);
+}
+.print-preview * { color: #111 !important; }
+.print-title { font-size: 16px; font-weight: 700; margin-bottom: 4px; }
+.print-sub { font-size: 11px; color: #666 !important; margin-bottom: 12px; }
+.print-table { width: 100%; border-collapse: collapse; font-size: 12px; }
+.print-table th { background: #f0f0f0; padding: 6px 8px; text-align: left; font-weight: 600; border: 1px solid #ddd; }
+.print-table td { padding: 6px 8px; border: 1px solid #ddd; }
+.print-table tr:nth-child(even) td { background: #fafafa; }
+.print-footer { margin-top: 10px; font-size: 11px; color: #888 !important; text-align: right; }
+
+/* ── Empty / misc ── */
+.empty { text-align: center; padding: 36px 20px; color: var(--text3); }
+.empty-icon { font-size: 36px; margin-bottom: 10px; }
+.empty-text { font-size: 13px; line-height: 1.6; }
+.toast { position: fixed; bottom: 88px; left: 50%; transform: translateX(-50%) translateY(20px); background: var(--surface); border: 1px solid var(--border); border-radius: 24px; padding: 10px 20px; font-size: 13px; color: var(--text); box-shadow: var(--shadow); opacity: 0; transition: all 0.3s; white-space: nowrap; z-index: 999; pointer-events: none; }
+.toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+.toast.success { border-color: rgba(0,229,176,0.5); color: var(--accent2); }
+.toast.error { border-color: rgba(255,95,109,0.5); color: var(--danger); }
+.row2 { display: flex; gap: 8px; }
+.row2 .input-group { flex: 1; }
+.highlight { color: var(--accent2); font-weight: 500; }
+.no-results { text-align: center; padding: 30px; color: var(--text3); font-size: 13px; }
+.divider { height: 1px; background: var(--border); margin: 14px 0; }
+.scanner-wrap { position: relative; }
+.scanner-btn { position: absolute; right: 10px; top: 50%; transform: translateY(-50%); background: none; border: none; font-size: 20px; cursor: pointer; padding: 4px; }
+
+/* ── QR Label ── */
+.qr-modal-bg {
+  display: none; position: fixed; inset: 0;
+  background: rgba(0,0,0,0.85); z-index: 600;
+  align-items: center; justify-content: center; flex-direction: column;
+}
+.qr-modal-bg.show { display: flex; }
+.qr-card {
+  background: #fff; border-radius: 16px; padding: 24px 20px 18px;
+  width: 88%; max-width: 320px; text-align: center;
+}
+.qr-item-name { font-size: 15px; font-weight: 700; color: #111; margin-bottom: 4px; }
+.qr-item-sub { font-size: 12px; color: #666; margin-bottom: 14px; font-family: monospace; }
+#qr-canvas-wrap { display: flex; justify-content: center; margin-bottom: 12px; }
+#qr-canvas-wrap canvas, #qr-canvas-wrap img { border-radius: 8px; }
+.qr-loc-label {
+  display: inline-block; background: #1a6cff; color: #fff;
+  font-family: monospace; font-size: 18px; font-weight: 700;
+  padding: 5px 18px; border-radius: 8px; letter-spacing: 2px; margin-bottom: 14px;
+}
+.qr-actions { display: flex; gap: 8px; justify-content: center; }
+.qr-actions .btn { min-width: 90px; }
+
+/* ── Scan-out confirm modal ── */
+.scan-confirm-bg {
+  display: none; position: fixed; inset: 0;
+  background: rgba(0,0,0,0.85); z-index: 610;
+  align-items: center; justify-content: center;
+}
+.scan-confirm-bg.show { display: flex; }
+.scan-confirm-card {
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: 16px; padding: 22px 20px; width: 88%; max-width: 320px;
+}
+.scan-confirm-title { font-size: 13px; color: var(--text3); letter-spacing: 1px; text-transform: uppercase; margin-bottom: 14px; font-family: 'JetBrains Mono', monospace; }
+.scan-confirm-name { font-size: 17px; font-weight: 600; color: var(--text); margin-bottom: 4px; }
+.scan-confirm-meta { font-size: 12px; color: var(--text3); font-family: 'JetBrains Mono', monospace; margin-bottom: 16px; }
+.scan-confirm-loc { font-size: 26px; font-weight: 700; color: var(--accent); font-family: 'JetBrains Mono', monospace; text-align: center; margin-bottom: 16px; letter-spacing: 2px; }
+
+/* ── Print styles ── */
+@media print {
+  body * { visibility: hidden; }
+  .printable, .printable * { visibility: visible !important; color: #111 !important; }
+  .printable { position: fixed; top: 0; left: 0; width: 100%; padding: 20px; background: #fff; }
+  .no-print { display: none !important; }
+}
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div class="header-top">
+    <div class="logo">WMS <span>·</span> <span id="logo-sub">仓储管理</span></div>
+    <div style="display:flex;align-items:center;gap:8px">
+      <div style="font-size:11px;color:var(--text3);font-family:'JetBrains Mono',monospace" id="clock"></div>
+      <div style="display:flex;gap:4px">
+        <button onclick="setLang('zh')" id="lang-zh" style="background:rgba(79,140,255,0.2);color:var(--accent);border:1px solid rgba(79,140,255,0.4);border-radius:6px;padding:3px 7px;font-size:11px;cursor:pointer;font-family:'Noto Sans SC',sans-serif">中</button>
+        <button onclick="setLang('en')" id="lang-en" style="background:var(--surface2);color:var(--text3);border:1px solid var(--border);border-radius:6px;padding:3px 7px;font-size:11px;cursor:pointer">EN</button>
+        <button onclick="setLang('es')" id="lang-es" style="background:var(--surface2);color:var(--text3);border:1px solid var(--border);border-radius:6px;padding:3px 7px;font-size:11px;cursor:pointer">ES</button>
+      </div>
+    </div>
+  </div>
+  <div class="stats-row">
+    <div class="stat-chip"><span data-i18n="statItems">品类</span> <b id="stat-items">0</b></div>
+    <div class="stat-chip"><span data-i18n="statOut">今日出货</span> <b id="stat-out">0</b></div>
+    <div class="stat-chip"><span data-i18n="statIn">今日入库</span> <b id="stat-in">0</b></div>
+    <div class="stat-chip"><span data-i18n="statLow">低库存</span> <b id="stat-low" style="color:var(--warn)">0</b></div>
+  </div>
+</div>
+
+<!-- ══ PAGE: FIND ══ -->
+<div id="page-find" class="page active">
+  <div class="section-title">📦 <span data-i18n="findTitle">查货 / 出货</span></div>
+
+  <!-- Order mode bar -->
+  <div class="order-mode-bar" id="order-bar" style="display:none">
+    <div>
+      <div style="font-size:11px;color:var(--text2);margin-bottom:4px" data-i18n="currentOrder">当前订单</div>
+      <div class="order-badge" id="order-no-display">ORDER-001</div>
+    </div>
+    <div class="order-items-count" id="order-count"></div>
+    <button class="btn btn-success" onclick="showOrderPreview()" style="padding:8px 12px;font-size:12px" data-i18n="viewOrder">查看 →</button>
+    <button class="btn btn-danger" onclick="clearOrder()" style="padding:8px 10px;font-size:12px">✕</button>
+  </div>
+
+  <div class="row2" style="margin-bottom:10px">
+    <div style="flex:1;position:relative">
+      <div class="search-icon">🔍</div>
+      <input type="text" id="find-input" data-i18n-placeholder="findPlaceholder" placeholder="Style编号 或 商品名..." oninput="findItems()" style="padding-left:40px">
+    </div>
+    <button class="btn btn-ghost" onclick="startScan('find-input')" style="padding:10px 14px">📷</button>
+  </div>
+
+  <!-- Order mode toggle -->
+  <div style="display:flex;gap:8px;margin-bottom:12px">
+    <button class="btn btn-ghost" id="order-mode-btn" onclick="toggleOrderMode()" style="font-size:12px;padding:8px 12px" data-i18n="orderMode">📋 订单模式</button>
+    <input type="text" id="order-no-input" data-i18n-placeholder="orderNoPlaceholder" placeholder="订单号 (如 ORDER-001)" style="display:none;font-size:13px;padding:8px 12px;flex:1">
+  </div>
+
+  <div id="find-results"></div>
+
+  <!-- Order preview modal -->
+  <div id="order-preview" style="display:none">
+    <div class="section-title">📋 <span data-i18n="orderPreviewTitle">订单出货预览</span></div>
+    <div class="print-preview printable" id="print-area">
+      <div class="print-title" data-i18n="shipNote">出货单</div>
+      <div class="print-sub" id="print-meta"></div>
+      <table class="print-table" id="print-table">
+        <thead><tr><th data-i18n="colName">商品名</th><th>Style</th><th data-i18n="colLoc">货架</th><th data-i18n="colQty">出货数</th></tr></thead>
+        <tbody id="print-tbody"></tbody>
+      </table>
+      <div class="print-footer" id="print-footer"></div>
+    </div>
+    <div class="card-actions no-print">
+      <button class="btn btn-primary" onclick="printOrder()">🖨 <span data-i18n="btnPrint">打印</span></button>
+      <button class="btn btn-success" onclick="commitOrder()">✓ <span data-i18n="btnConfirmShip">确认出货</span></button>
+      <button class="btn btn-ghost" onclick="document.getElementById('order-preview').style.display='none'" data-i18n="btnBack">返回</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══ PAGE: STOCK ══ -->
+<div id="page-stock" class="page">
+  <div class="section-title">🗄 <span data-i18n="stockTitle">库存总览</span></div>
+  <div class="row2">
+    <div class="search-wrap" style="flex:1;margin-bottom:0">
+      <span class="search-icon">🔍</span>
+      <input type="text" id="stock-search" data-i18n-placeholder="searchPlaceholder" placeholder="搜索..." oninput="renderStock()" style="padding-left:40px">
+    </div>
+    <button class="btn btn-ghost" onclick="exportCSV()" style="padding:10px 12px;font-size:12px">⬇ <span data-i18n="btnExport">导出</span></button>
+  </div>
+  <div style="height:10px"></div>
+  <div id="stock-list"></div>
+</div>
+
+<!-- ══ PAGE: ADD ══ -->
+<div id="page-add" class="page">
+  <div class="section-title">➕ <span data-i18n="addTitle">录入货品</span></div>
+  <div class="card">
+    <div class="input-group">
+      <label class="input-label" data-i18n="labelName">商品名称 *</label>
+      <input type="text" id="add-name" data-i18n-placeholder="placeholderName" placeholder="如：女款连衣裙 春季款">
+    </div>
+    <div class="row2">
+      <div class="input-group">
+        <label class="input-label">Style *</label>
+        <div style="position:relative">
+          <input type="text" id="add-style" placeholder="DR-2401">
+          <button class="scanner-btn" onclick="startScan('add-style')">📷</button>
+        </div>
+      </div>
+      <div class="input-group">
+        <label class="input-label" data-i18n="labelLoc">货架位置 *</label>
+        <input type="text" id="add-loc" placeholder="A-03-2">
+      </div>
+    </div>
+    <div class="row2">
+      <div class="input-group">
+        <label class="input-label" data-i18n="labelQty">库存数量</label>
+        <input type="number" id="add-qty" placeholder="0" min="0">
+      </div>
+      <div class="input-group">
+        <label class="input-label" data-i18n="labelWarn">低库存预警</label>
+        <input type="number" id="add-warn" placeholder="10" min="0">
+      </div>
+    </div>
+    <div class="input-group">
+      <label class="input-label" data-i18n="labelNote">备注</label>
+      <input type="text" id="add-note" data-i18n-placeholder="placeholderNote" placeholder="颜色/尺码/客户等（可选）">
+    </div>
+    <button class="btn btn-primary btn-full" onclick="addItem()">✓ <span data-i18n="btnSave">保存录入</span></button>
+  </div>
+
+  <div class="section-title">📷 <span data-i18n="scanOutTitle">扫码出库</span></div>
+  <div class="card">
+    <p style="font-size:13px;color:var(--text2);margin-bottom:12px;line-height:1.6" data-i18n="scanOutDesc">扫描货架上的二维码标签，自动识别商品并快速出库。</p>
+    <button class="btn btn-success btn-full" onclick="startQRScanOut()">📷 <span data-i18n="btnScanOut">扫描二维码出库</span></button>
+  </div>
+
+  <div class="section-title">📥 <span data-i18n="inboundTitle">入库登记</span></div>
+  <div class="card">
+    <div class="input-group">
+      <label class="input-label">Style</label>
+      <div style="position:relative">
+        <input type="text" id="in-style" data-i18n-placeholder="placeholderScanOrType" placeholder="输入或扫码">
+        <button class="scanner-btn" onclick="startScan('in-style')">📷</button>
+      </div>
+    </div>
+    <div class="row2">
+      <div class="input-group">
+        <label class="input-label" data-i18n="labelInQty">入库数量 *</label>
+        <input type="number" id="in-qty" placeholder="0" min="1">
+      </div>
+      <div class="input-group">
+        <label class="input-label" data-i18n="labelPO">入库单号</label>
+        <input type="text" id="in-po" data-i18n-placeholder="placeholderOptional" placeholder="可选">
+      </div>
+    </div>
+    <button class="btn btn-purple btn-full" onclick="doInbound()">📥 <span data-i18n="btnInbound">确认入库</span></button>
+  </div>
+
+  <div class="section-title">📝 <span data-i18n="batchTitle">批量导入</span></div>
+  <div class="card">
+    <div class="input-group">
+      <label class="input-label" data-i18n="batchFormat">格式：商品名, Style编号, 货架位置, 数量</label>
+      <textarea id="batch-input" rows="5" placeholder="女款连衣裙,DR-2401,A-03-2,50&#10;男款衬衫,SH-1105,B-01-1,30"></textarea>
+    </div>
+    <button class="btn btn-ghost btn-full" onclick="batchImport()">⬆ <span data-i18n="btnBatchImport">批量导入</span></button>
+  </div>
+</div>
+
+<!-- ══ PAGE: LOG ══ -->
+<div id="page-log" class="page">
+  <div class="section-title">📋 <span data-i18n="logTitle">操作记录</span></div>
+  <div class="log-filter-row">
+    <select id="log-type-filter" onchange="renderLog()">
+      <option value="all" data-i18n="filterAll">全部类型</option>
+      <option value="out" data-i18n="filterOut">出库</option>
+      <option value="in" data-i18n="filterIn">入库</option>
+    </select>
+    <select id="log-date-filter" onchange="renderLog()">
+      <option value="all" data-i18n="dateAll">全部日期</option>
+      <option value="today" data-i18n="dateToday">今天</option>
+      <option value="week" data-i18n="dateWeek">本周</option>
+      <option value="month" data-i18n="dateMonth">本月</option>
+    </select>
+  </div>
+  <div id="log-list"></div>
+</div>
+
+<!-- Bottom Nav -->
+<div class="bottom-nav">
+  <div class="nav-item active" onclick="switchTab('find',this)"><span class="nav-icon">🔍</span><div class="nav-label" data-i18n="navFind">查货</div></div>
+  <div class="nav-item" onclick="switchTab('stock',this)"><span class="nav-icon">📦</span><div class="nav-label" data-i18n="navStock">库存</div></div>
+  <div class="nav-item" onclick="switchTab('add',this)"><span class="nav-icon">➕</span><div class="nav-label" data-i18n="navAdd">录入</div></div>
+  <div class="nav-item" onclick="switchTab('log',this)"><span class="nav-icon">📋</span><div class="nav-label" data-i18n="navLog">记录</div></div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<!-- Scanner modal -->
+<div id="scan-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.85);z-index:500;flex-direction:column;align-items:center;justify-content:center">
+  <div style="color:#fff;font-size:14px;margin-bottom:12px" data-i18n="scanHint">对准条码扫描</div>
+  <video id="scan-video" style="width:90%;max-width:360px;border-radius:12px;border:2px solid var(--accent)"></video>
+  <button class="btn btn-danger" onclick="stopScan()" style="margin-top:16px" data-i18n="btnCancel">✕ 取消</button>
+</div>
+
+<!-- QR Label modal -->
+<div class="qr-modal-bg" id="qr-modal">
+  <div class="qr-card" id="qr-printable">
+    <div class="qr-item-name" id="qr-name"></div>
+    <div class="qr-item-sub" id="qr-sub"></div>
+    <div id="qr-canvas-wrap"></div>
+    <div class="qr-loc-label" id="qr-loc"></div>
+  </div>
+  <div class="qr-actions" style="margin-top:14px">
+    <button class="btn btn-primary" onclick="printQR()"><span data-i18n="qrPrintLabel">🖨 打印标签</span></button>
+    <button class="btn btn-ghost" onclick="closeQR()" data-i18n="qrClose">关闭</button>
+  </div>
+</div>
+
+<!-- Scan-out confirm modal -->
+<div class="scan-confirm-bg" id="scan-confirm">
+  <div class="scan-confirm-card">
+    <div class="scan-confirm-title" data-i18n="scanConfirmTitle">📷 扫码出库确认</div>
+    <div class="scan-confirm-name" id="sc-name"></div>
+    <div class="scan-confirm-meta" id="sc-meta"></div>
+    <div class="scan-confirm-loc" id="sc-loc"></div>
+    <div class="input-group">
+      <label class="input-label" data-i18n="scQtyLabel">出库数量</label>
+      <input type="number" id="sc-qty" data-i18n-placeholder="scQtyPlaceholder" placeholder="输入数量" min="1" style="text-align:center;font-size:20px;font-family:'JetBrains Mono',monospace">
+    </div>
+    <div style="display:flex;gap:8px;margin-top:4px">
+      <button class="btn btn-success btn-full" onclick="confirmScanOut()" data-i18n="btnConfirmOut">✓ 确认出库</button>
+      <button class="btn btn-ghost" onclick="closeScanConfirm()" style="flex:none;padding:10px 16px" data-i18n="btnCancel">取消</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ── i18n ─────────────────────────────────────────────
+const LANGS = {
+  zh: {
+    logoSub: '仓储管理',
+    statItems: '品类', statOut: '今日出货', statIn: '今日入库', statLow: '低库存',
+    findTitle: '查货 / 出货', currentOrder: '当前订单', viewOrder: '查看 →',
+    orderMode: '📋 订单模式', orderNoPlaceholder: '订单号 (如 ORDER-001)',
+    orderPreviewTitle: '订单出货预览', shipNote: '出货单',
+    colName: '商品名', colLoc: '货架', colQty: '出货数',
+    btnPrint: '打印', btnConfirmShip: '确认出货', btnBack: '返回',
+    stockTitle: '库存总览', searchPlaceholder: '搜索...', btnExport: '导出',
+    addTitle: '录入货品', labelName: '商品名称 *', labelLoc: '货架位置 *',
+    labelQty: '库存数量', labelWarn: '低库存预警', labelNote: '备注',
+    placeholderName: '如：女款连衣裙 春季款', placeholderNote: '颜色/尺码/客户等（可选）',
+    btnSave: '保存录入',
+    scanOutTitle: '扫码出库', scanOutDesc: '扫描货架上的二维码标签，自动识别商品并快速出库。', btnScanOut: '扫描二维码出库',
+    inboundTitle: '入库登记', labelInQty: '入库数量 *', labelPO: '入库单号',
+    placeholderScanOrType: '输入或扫码', placeholderOptional: '可选', btnInbound: '确认入库',
+    batchTitle: '批量导入', batchFormat: '格式：商品名, Style编号, 货架位置, 数量', btnBatchImport: '批量导入',
+    logTitle: '操作记录', filterAll: '全部类型', filterOut: '出库', filterIn: '入库',
+    dateAll: '全部日期', dateToday: '今天', dateWeek: '本周', dateMonth: '本月',
+    navFind: '查货', navStock: '库存', navAdd: '录入', navLog: '记录',
+    scanHint: '对准条码扫描', btnCancel: '✕ 取消',
+    qrPrintLabel: '🖨 打印标签', qrClose: '关闭',
+    scanConfirmTitle: '📷 扫码出库确认', scQtyLabel: '出库数量', btnConfirmOut: '✓ 确认出库',
+    toastCopied: '已复制：', toastEnterQty: '请输入出货数量', toastOverStock: '出货数量超过库存',
+    toastShipOk: '✓ 出货 {qty} 件：{name}', toastAddOrder: '✓ 已加入订单：{name}',
+    toastOrderEmpty: '订单为空', toastOrderClear: '订单已清空', toastOrderDone: '✓ 订单 {no} 出货完成',
+    toastInboundOk: '✓ 入库 {qty} 件：{name}', toastStyleNotFound: '未找到该 Style，请先在"录入"中添加',
+    toastEnterInQty: '请输入入库数量', toastEnterStyle: '请输入 Style 编号',
+    toastAddOk: '✓ 录入成功：{name}', toastStyleExists: '该 Style 编号已存在',
+    toastFillRequired: '请填写商品名、编号和货架位置',
+    toastBatchOk: '✓ 成功导入 {count} 条', toastExportOk: '✓ 导出成功', toastNoData: '暂无数据',
+    toastQtyUpdated: '✓ 库存已更新', toastLocUpdated: '✓ 位置已更新', toastDeleted: '已删除',
+    toastScanOk: '✓ 扫码成功：{val}', toastScanFail: '无法识别此二维码',
+    toastScanConfirmOk: '✓ 扫码出库 {qty} 件：{name}', toastEnterQtyFirst: '请先输入数量',
+    toastCameraFail: '无法访问摄像头', toastNoBarcodeAPI: '当前浏览器不支持自动识别，请手动输入',
+    toastNoCameraAPI: '当前环境不支持摄像头',
+    editQtyPrompt: '修改"{name}"库存（当前：{qty}）', editLocPrompt: '修改"{name}"货架位置（当前：{loc}）',
+    deleteConfirm: '确认删除"{name}"？', clearLogConfirm: '确认清空所有记录？',
+    emptyStock: '暂无库存数据\n前往"录入"添加货品', emptyLog: '暂无记录',
+    noResults: '未找到匹配货品', stockQty: '库存 {qty} 件', stockQtyEmpty: '—',
+    lowStock: '⚠ 低库存', warnVal: '预警值 {qty}', notRecorded: '未录入',
+    btnEditQty: '修改库存', btnEditLoc: '修改位置', btnQR: '🔲 二维码', btnDelete: '删除',
+    btnShipOut: '✓ 出货', btnAddOrder: '+ 加入订单',
+    locationLabel: '货架位置', clearLogBtn: '清空全部记录',
+    orderCountText: '已添加 {n} 种商品',
+    printMeta: '订单号：{no}　　制单时间：{time}',
+    printFooter: '合计 {kinds} 种商品，共 {total} 件',
+    scMeta: '{style} · 库存：{qty} 件', scQtyPlaceholder: '输入数量',
+    csvFilename: '库存_{date}.csv',
+  },
+  en: {
+    logoSub: 'Warehouse',
+    statItems: 'SKUs', statOut: "Today's Out", statIn: "Today's In", statLow: 'Low Stock',
+    findTitle: 'Find / Ship Out', currentOrder: 'Current Order', viewOrder: 'View →',
+    orderMode: '📋 Order Mode', orderNoPlaceholder: 'Order No. (e.g. ORDER-001)',
+    orderPreviewTitle: 'Order Shipment Preview', shipNote: 'Shipping Note',
+    colName: 'Item Name', colLoc: 'Location', colQty: 'Qty',
+    btnPrint: 'Print', btnConfirmShip: 'Confirm Shipment', btnBack: 'Back',
+    stockTitle: 'Inventory', searchPlaceholder: 'Search...', btnExport: 'Export',
+    addTitle: 'Add Item', labelName: 'Item Name *', labelLoc: 'Shelf Location *',
+    labelQty: 'Stock Qty', labelWarn: 'Low Stock Alert', labelNote: 'Notes',
+    placeholderName: 'e.g. Women\'s Dress Spring', placeholderNote: 'Color/Size/Client (optional)',
+    btnSave: 'Save',
+    scanOutTitle: 'Scan & Ship Out', scanOutDesc: 'Scan the QR label on the shelf to quickly identify and ship items.', btnScanOut: 'Scan QR to Ship Out',
+    inboundTitle: 'Receive Goods', labelInQty: 'Inbound Qty *', labelPO: 'PO Number',
+    placeholderScanOrType: 'Type or scan', placeholderOptional: 'Optional', btnInbound: 'Confirm Inbound',
+    batchTitle: 'Batch Import', batchFormat: 'Format: Name, Style, Location, Qty', btnBatchImport: 'Import',
+    logTitle: 'Activity Log', filterAll: 'All Types', filterOut: 'Outbound', filterIn: 'Inbound',
+    dateAll: 'All Dates', dateToday: 'Today', dateWeek: 'This Week', dateMonth: 'This Month',
+    navFind: 'Find', navStock: 'Stock', navAdd: 'Add', navLog: 'Log',
+    scanHint: 'Point camera at barcode', btnCancel: '✕ Cancel',
+    qrPrintLabel: '🖨 Print Label', qrClose: 'Close',
+    scanConfirmTitle: '📷 Scan-Out Confirm', scQtyLabel: 'Qty to Ship', btnConfirmOut: '✓ Confirm',
+    toastCopied: 'Copied: ', toastEnterQty: 'Please enter a quantity', toastOverStock: 'Quantity exceeds stock',
+    toastShipOk: '✓ Shipped {qty} × {name}', toastAddOrder: '✓ Added to order: {name}',
+    toastOrderEmpty: 'Order is empty', toastOrderClear: 'Order cleared', toastOrderDone: '✓ Order {no} shipped',
+    toastInboundOk: '✓ Received {qty} × {name}', toastStyleNotFound: 'Style not found — add it in Add Item first',
+    toastEnterInQty: 'Please enter inbound qty', toastEnterStyle: 'Please enter a Style number',
+    toastAddOk: '✓ Added: {name}', toastStyleExists: 'This Style number already exists',
+    toastFillRequired: 'Please fill in Name, Style and Location',
+    toastBatchOk: '✓ Imported {count} items', toastExportOk: '✓ Export successful', toastNoData: 'No data',
+    toastQtyUpdated: '✓ Stock updated', toastLocUpdated: '✓ Location updated', toastDeleted: 'Deleted',
+    toastScanOk: '✓ Scanned: {val}', toastScanFail: 'QR code not recognized',
+    toastScanConfirmOk: '✓ Scanned out {qty} × {name}', toastEnterQtyFirst: 'Enter qty first',
+    toastCameraFail: 'Cannot access camera', toastNoBarcodeAPI: 'Auto-scan not supported, please type manually',
+    toastNoCameraAPI: 'Camera not supported in this browser',
+    editQtyPrompt: 'Update stock for "{name}" (current: {qty})', editLocPrompt: 'Update location for "{name}" (current: {loc})',
+    deleteConfirm: 'Delete "{name}"?', clearLogConfirm: 'Clear all log entries?',
+    emptyStock: 'No inventory yet\nGo to Add Item to get started', emptyLog: 'No records yet',
+    noResults: 'No matching items found', stockQty: '{qty} pcs', stockQtyEmpty: '—',
+    lowStock: '⚠ Low Stock', warnVal: 'Alert: {qty}', notRecorded: 'Not set',
+    btnEditQty: 'Edit Stock', btnEditLoc: 'Edit Location', btnQR: '🔲 QR Code', btnDelete: 'Delete',
+    btnShipOut: '✓ Ship Out', btnAddOrder: '+ Add to Order',
+    locationLabel: 'Shelf Location', clearLogBtn: 'Clear All Logs',
+    orderCountText: '{n} item(s) added',
+    printMeta: 'Order: {no}   Time: {time}',
+    printFooter: '{kinds} SKU(s), {total} units total',
+    scMeta: '{style} · Stock: {qty} pcs', scQtyPlaceholder: 'Enter qty',
+    csvFilename: 'inventory_{date}.csv',
+  },
+  es: {
+    logoSub: 'Almacén',
+    statItems: 'SKUs', statOut: 'Salidas Hoy', statIn: 'Entradas Hoy', statLow: 'Stock Bajo',
+    findTitle: 'Buscar / Despachar', currentOrder: 'Pedido Actual', viewOrder: 'Ver →',
+    orderMode: '📋 Modo Pedido', orderNoPlaceholder: 'Nº Pedido (ej. ORDER-001)',
+    orderPreviewTitle: 'Vista Previa del Pedido', shipNote: 'Nota de Envío',
+    colName: 'Producto', colLoc: 'Ubicación', colQty: 'Cant.',
+    btnPrint: 'Imprimir', btnConfirmShip: 'Confirmar Envío', btnBack: 'Volver',
+    stockTitle: 'Inventario', searchPlaceholder: 'Buscar...', btnExport: 'Exportar',
+    addTitle: 'Agregar Producto', labelName: 'Nombre *', labelLoc: 'Ubicación *',
+    labelQty: 'Cantidad', labelWarn: 'Alerta Stock Bajo', labelNote: 'Notas',
+    placeholderName: 'ej. Vestido Mujer Primavera', placeholderNote: 'Color/Talla/Cliente (opcional)',
+    btnSave: 'Guardar',
+    scanOutTitle: 'Escanear y Despachar', scanOutDesc: 'Escanee el código QR del estante para identificar y despachar productos rápidamente.', btnScanOut: 'Escanear QR para Despachar',
+    inboundTitle: 'Recepción de Mercancía', labelInQty: 'Cant. Entrada *', labelPO: 'Nº Orden de Compra',
+    placeholderScanOrType: 'Escribir o escanear', placeholderOptional: 'Opcional', btnInbound: 'Confirmar Entrada',
+    batchTitle: 'Importación Masiva', batchFormat: 'Formato: Nombre, Style, Ubicación, Cantidad', btnBatchImport: 'Importar',
+    logTitle: 'Registro de Actividad', filterAll: 'Todos', filterOut: 'Salidas', filterIn: 'Entradas',
+    dateAll: 'Todas las fechas', dateToday: 'Hoy', dateWeek: 'Esta Semana', dateMonth: 'Este Mes',
+    navFind: 'Buscar', navStock: 'Stock', navAdd: 'Agregar', navLog: 'Registro',
+    scanHint: 'Apunte la cámara al código', btnCancel: '✕ Cancelar',
+    qrPrintLabel: '🖨 Imprimir Etiqueta', qrClose: 'Cerrar',
+    scanConfirmTitle: '📷 Confirmar Despacho', scQtyLabel: 'Cant. a Despachar', btnConfirmOut: '✓ Confirmar',
+    toastCopied: 'Copiado: ', toastEnterQty: 'Ingrese una cantidad', toastOverStock: 'Cantidad supera el stock',
+    toastShipOk: '✓ Despachado {qty} × {name}', toastAddOrder: '✓ Agregado al pedido: {name}',
+    toastOrderEmpty: 'El pedido está vacío', toastOrderClear: 'Pedido borrado', toastOrderDone: '✓ Pedido {no} despachado',
+    toastInboundOk: '✓ Recibido {qty} × {name}', toastStyleNotFound: 'Style no encontrado — agréguelo primero',
+    toastEnterInQty: 'Ingrese la cantidad de entrada', toastEnterStyle: 'Ingrese el número de Style',
+    toastAddOk: '✓ Agregado: {name}', toastStyleExists: 'Este Style ya existe',
+    toastFillRequired: 'Complete Nombre, Style y Ubicación',
+    toastBatchOk: '✓ Importados {count} artículos', toastExportOk: '✓ Exportación exitosa', toastNoData: 'Sin datos',
+    toastQtyUpdated: '✓ Stock actualizado', toastLocUpdated: '✓ Ubicación actualizada', toastDeleted: 'Eliminado',
+    toastScanOk: '✓ Escaneado: {val}', toastScanFail: 'Código QR no reconocido',
+    toastScanConfirmOk: '✓ Despachado {qty} × {name}', toastEnterQtyFirst: 'Ingrese cantidad primero',
+    toastCameraFail: 'No se puede acceder a la cámara', toastNoBarcodeAPI: 'Escaneo automático no disponible',
+    toastNoCameraAPI: 'Cámara no compatible con este navegador',
+    editQtyPrompt: 'Actualizar stock de "{name}" (actual: {qty})', editLocPrompt: 'Actualizar ubicación de "{name}" (actual: {loc})',
+    deleteConfirm: '¿Eliminar "{name}"?', clearLogConfirm: '¿Borrar todos los registros?',
+    emptyStock: 'Sin inventario aún\nVaya a Agregar para comenzar', emptyLog: 'Sin registros',
+    noResults: 'No se encontraron productos', stockQty: '{qty} uds.', stockQtyEmpty: '—',
+    lowStock: '⚠ Stock Bajo', warnVal: 'Alerta: {qty}', notRecorded: 'No registrado',
+    btnEditQty: 'Editar Stock', btnEditLoc: 'Editar Ubicación', btnQR: '🔲 Código QR', btnDelete: 'Eliminar',
+    btnShipOut: '✓ Despachar', btnAddOrder: '+ Agregar al Pedido',
+    locationLabel: 'Ubicación', clearLogBtn: 'Borrar Todo el Registro',
+    orderCountText: '{n} artículo(s) agregado(s)',
+    printMeta: 'Pedido: {no}   Hora: {time}',
+    printFooter: '{kinds} SKU(s), {total} unidades en total',
+    scMeta: '{style} · Stock: {qty} uds.', scQtyPlaceholder: 'Ingrese cant.',
+    csvFilename: 'inventario_{date}.csv',
+  }
+};
+
+let currentLang = localStorage.getItem('wms_lang') || 'zh';
+function t(key, vars) {
+  let s = LANGS[currentLang][key] || LANGS.zh[key] || key;
+  if (vars) Object.keys(vars).forEach(k => s = s.replace(new RegExp(`{${k}}`, 'g'), vars[k]));
+  return s;
+}
+
+function setLang(lang) {
+  currentLang = lang;
+  localStorage.setItem('wms_lang', lang);
+  // Update lang buttons
+  ['zh','en','es'].forEach(l => {
+    const btn = document.getElementById('lang-' + l);
+    if (l === lang) {
+      btn.style.background = 'rgba(79,140,255,0.2)';
+      btn.style.color = 'var(--accent)';
+      btn.style.borderColor = 'rgba(79,140,255,0.4)';
+    } else {
+      btn.style.background = 'var(--surface2)';
+      btn.style.color = 'var(--text3)';
+      btn.style.borderColor = 'var(--border)';
+    }
+  });
+  // Update logo
+  document.getElementById('logo-sub').textContent = t('logoSub');
+  // Update all data-i18n elements
+  document.querySelectorAll('[data-i18n]').forEach(el => {
+    el.textContent = t(el.getAttribute('data-i18n'));
+  });
+  document.querySelectorAll('[data-i18n-placeholder]').forEach(el => {
+    el.placeholder = t(el.getAttribute('data-i18n-placeholder'));
+  });
+  // Re-render dynamic content
+  const activeStock = document.getElementById('page-stock').classList.contains('active');
+  const activeLog = document.getElementById('page-log').classList.contains('active');
+  if (activeStock) renderStock();
+  if (activeLog) renderLog();
+  // Update QR modal buttons
+  document.querySelector('.qr-actions .btn-primary span') && (document.querySelector('.qr-actions .btn-primary span').textContent = t('qrPrintLabel'));
+}
+
+// ── Data ─────────────────────────────────────────────
+let db = JSON.parse(localStorage.getItem('wms_db2') || '{"items":[],"logs":[]}');
+let orderMode = false;
+let currentOrder = { no: '', items: [] };
+let scanTarget = null;
+let scanStream = null;
+
+function save() { localStorage.setItem('wms_db2', JSON.stringify(db)); updateStats(); }
+
+function updateStats() {
+  document.getElementById('stat-items').textContent = db.items.length;
+  const today = new Date().toDateString();
+  const todayLogs = db.logs.filter(l => new Date(l.time).toDateString() === today);
+  document.getElementById('stat-out').textContent = todayLogs.filter(l => l.type === 'out').reduce((s,l) => s + l.qty, 0);
+  document.getElementById('stat-in').textContent = todayLogs.filter(l => l.type === 'in').reduce((s,l) => s + l.qty, 0);
+  document.getElementById('stat-low').textContent =
+    db.items.filter(i => i.qty !== '' && i.warnQty !== '' && Number(i.qty) <= Number(i.warnQty)).length;
+}
+
+// ── Clock ─────────────────────────────────────────────
+function tick() {
+  const n = new Date();
+  document.getElementById('clock').textContent =
+    n.toLocaleDateString('zh-CN',{month:'2-digit',day:'2-digit'}) + ' ' + n.toTimeString().slice(0,5);
+}
+tick(); setInterval(tick, 10000);
+
+// ── Tab ───────────────────────────────────────────────
+function switchTab(name, el) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+  document.getElementById('page-' + name).classList.add('active');
+  el.classList.add('active');
+  if (name === 'stock') renderStock();
+  if (name === 'log') renderLog();
+}
+
+// ── Toast ─────────────────────────────────────────────
+function showToast(msg, type = '') {
+  const t = document.getElementById('toast');
+  t.textContent = msg; t.className = 'toast show ' + type;
+  setTimeout(() => t.className = 'toast', 2200);
+}
+
+// ── Order Mode ────────────────────────────────────────
+function toggleOrderMode() {
+  orderMode = !orderMode;
+  const btn = document.getElementById('order-mode-btn');
+  const noInput = document.getElementById('order-no-input');
+  if (orderMode) {
+    btn.style.background = 'rgba(79,140,255,0.2)';
+    btn.style.color = 'var(--accent)';
+    btn.style.borderColor = 'rgba(79,140,255,0.4)';
+    noInput.style.display = 'block';
+    currentOrder = { no: '', items: [] };
+    updateOrderBar();
+  } else {
+    btn.style.cssText = '';
+    noInput.style.display = 'none';
+    document.getElementById('order-bar').style.display = 'none';
+    document.getElementById('order-preview').style.display = 'none';
+    currentOrder = { no: '', items: [] };
+  }
+}
+
+function updateOrderBar() {
+  const bar = document.getElementById('order-bar');
+  if (!orderMode) { bar.style.display = 'none'; return; }
+  bar.style.display = 'flex';
+  const no = document.getElementById('order-no-input').value.trim() || '未命名订单';
+  document.getElementById('order-no-display').textContent = no;
+  document.getElementById('order-count').textContent = t('orderCountText', { n: currentOrder.items.length });
+}
+
+function clearOrder() {
+  currentOrder = { no: '', items: [] };
+  document.getElementById('order-no-input').value = '';
+  document.getElementById('order-preview').style.display = 'none';
+  updateOrderBar();
+  showToast(t('toastOrderClear'));
+}
+
+// ── Find / Search ─────────────────────────────────────
+function findItems() {
+  const q = document.getElementById('find-input').value.trim().toLowerCase();
+  const box = document.getElementById('find-results');
+  document.getElementById('order-preview').style.display = 'none';
+  if (!q) { box.innerHTML = ''; return; }
+
+  const results = db.items.filter(i =>
+    i.style.toLowerCase().includes(q) || i.name.toLowerCase().includes(q) || i.loc.toLowerCase().includes(q)
+  );
+
+  if (!results.length) {
+    box.innerHTML = `<div class="no-results">${t('noResults')}</div>`; return;
+  }
+
+  box.innerHTML = results.map(item => {
+    const low = item.qty !== '' && item.warnQty !== '' && Number(item.qty) <= Number(item.warnQty);
+    return `
+    <div class="order-result">
+      <div class="card-header">
+        <div>
+          <div class="item-name">${item.name}</div>
+          <div class="item-style">${item.style}${item.note ? ' · ' + item.note : ''}</div>
+        </div>
+      </div>
+      <div class="location-big">${item.loc}</div>
+      <div class="location-label">${t('locationLabel')}</div>
+      <div class="card-meta" style="margin-bottom:8px">
+        <span class="meta-tag qty">${item.qty !== '' ? t('stockQty',{qty:item.qty}) : t('notRecorded')}</span>
+        ${low ? `<span class="meta-tag warn">${t('lowStock')}</span>` : ''}
+      </div>
+      <div class="qty-input-row">
+        <input type="number" id="out-qty-${item.id}" placeholder="${t('scQtyPlaceholder')}" min="1" style="flex:1">
+        ${orderMode
+          ? `<button class="btn btn-purple" onclick="addToOrder(${item.id})">${t('btnAddOrder')}</button>`
+          : `<button class="btn btn-success" onclick="shipOut(${item.id})">${t('btnShipOut')}</button>`
+        }
+        <button class="btn btn-ghost" onclick="copyLoc('${item.loc}')">📋</button>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function copyLoc(loc) {
+  navigator.clipboard.writeText(loc).then(() => showToast(t('toastCopied') + loc, 'success'))
+    .catch(() => showToast(t('toastCopied') + loc));
+}
+
+// ── Single ship out ───────────────────────────────────
+function shipOut(id) {
+  const item = db.items.find(i => i.id === id);
+  if (!item) return;
+  const qty = parseInt(document.getElementById('out-qty-' + id).value);
+  if (!qty || qty < 1) { showToast(t('toastEnterQty'), 'error'); return; }
+  if (item.qty !== '' && Number(item.qty) < qty) { showToast(t('toastOverStock'), 'error'); return; }
+  if (item.qty !== '') item.qty = String(Number(item.qty) - qty);
+  db.logs.unshift({ time: new Date().toISOString(), type: 'out', itemName: item.name, style: item.style, loc: item.loc, qty, orderNo: '' });
+  save(); document.getElementById('out-qty-' + id).value = '';
+  findItems(); showToast(t('toastShipOk', {qty, name: item.name}), 'success');
+}
+
+// ── Order mode ────────────────────────────────────────
+function addToOrder(id) {
+  const item = db.items.find(i => i.id === id);
+  if (!item) return;
+  const qty = parseInt(document.getElementById('out-qty-' + id).value);
+  if (!qty || qty < 1) { showToast(t('toastEnterQtyFirst'), 'error'); return; }
+  const existing = currentOrder.items.find(i => i.id === id);
+  if (existing) { existing.qty += qty; }
+  else { currentOrder.items.push({ id, name: item.name, style: item.style, loc: item.loc, qty }); }
+  document.getElementById('out-qty-' + id).value = '';
+  updateOrderBar(); showToast(t('toastAddOrder', {name: item.name}), 'success');
+}
+
+function showOrderPreview() {
+  if (!currentOrder.items.length) { showToast(t('toastOrderEmpty'), 'error'); return; }
+  const no = document.getElementById('order-no-input').value.trim() || 'ORDER';
+  currentOrder.no = no;
+  document.getElementById('print-meta').textContent = t('printMeta', { no, time: new Date().toLocaleString() });
+  const tbody = document.getElementById('print-tbody');
+  tbody.innerHTML = currentOrder.items.map(i =>
+    `<tr><td>${i.name}</td><td style="font-family:monospace">${i.style}</td><td style="font-family:monospace;color:#1a6cff">${i.loc}</td><td>${i.qty}</td></tr>`
+  ).join('');
+  const total = currentOrder.items.reduce((s, i) => s + i.qty, 0);
+  document.getElementById('print-footer').textContent = t('printFooter', { kinds: currentOrder.items.length, total });
+  document.getElementById('order-preview').style.display = 'block';
+  document.getElementById('order-preview').scrollIntoView({ behavior: 'smooth' });
+}
+
+function printOrder() { window.print(); }
+
+function commitOrder() {
+  if (!currentOrder.items.length) return;
+  const no = currentOrder.no || 'ORDER';
+  currentOrder.items.forEach(oi => {
+    const item = db.items.find(i => i.id === oi.id);
+    if (item && item.qty !== '') item.qty = String(Math.max(0, Number(item.qty) - oi.qty));
+    db.logs.unshift({ time: new Date().toISOString(), type: 'out', itemName: oi.name, style: oi.style, loc: oi.loc, qty: oi.qty, orderNo: no });
+  });
+  save();
+  showToast(t('toastOrderDone', { no }), 'success');
+  clearOrder();
+  document.getElementById('order-preview').style.display = 'none';
+  document.getElementById('find-input').value = '';
+  document.getElementById('find-results').innerHTML = '';
+}
+
+// ── Inbound ───────────────────────────────────────────
+function doInbound() {
+  const styleVal = document.getElementById('in-style').value.trim();
+  const qty = parseInt(document.getElementById('in-qty').value);
+  const po = document.getElementById('in-po').value.trim();
+  if (!styleVal) { showToast(t('toastEnterStyle'), 'error'); return; }
+  if (!qty || qty < 1) { showToast(t('toastEnterInQty'), 'error'); return; }
+  const item = db.items.find(i => i.style.toLowerCase() === styleVal.toLowerCase());
+  if (!item) { showToast(t('toastStyleNotFound'), 'error'); return; }
+  item.qty = String(Number(item.qty || 0) + qty);
+  db.logs.unshift({ time: new Date().toISOString(), type: 'in', itemName: item.name, style: item.style, loc: item.loc, qty, orderNo: po });
+  save();
+  ['in-style','in-qty','in-po'].forEach(id => document.getElementById(id).value = '');
+  showToast(t('toastInboundOk', {qty, name: item.name}), 'success');
+  // 自动弹出二维码标签
+  setTimeout(() => showQR(item.id), 400);
+}
+
+// ── QR Code ───────────────────────────────────────────
+let currentQRItem = null;
+
+function showQR(id) {
+  const item = db.items.find(i => i.id === id);
+  if (!item) return;
+  currentQRItem = item;
+  document.getElementById('qr-name').textContent = item.name;
+  document.getElementById('qr-sub').textContent = item.style + (item.note ? ' · ' + item.note : '');
+  document.getElementById('qr-loc').textContent = item.loc;
+
+  // QR内容：JSON格式，包含id、style、loc，出库时解析
+  const qrData = JSON.stringify({ id: item.id, style: item.style, loc: item.loc, name: item.name });
+
+  const wrap = document.getElementById('qr-canvas-wrap');
+  wrap.innerHTML = '';
+  new QRCode(wrap, {
+    text: qrData,
+    width: 180, height: 180,
+    colorDark: '#000000', colorLight: '#ffffff',
+    correctLevel: QRCode.CorrectLevel.M
+  });
+  document.getElementById('qr-modal').classList.add('show');
+}
+
+function closeQR() {
+  document.getElementById('qr-modal').classList.remove('show');
+}
+
+function printQR() {
+  const item = currentQRItem;
+  if (!item) return;
+  // 获取二维码图片
+  const canvas = document.querySelector('#qr-canvas-wrap canvas');
+  const img = document.querySelector('#qr-canvas-wrap img');
+  const qrSrc = canvas ? canvas.toDataURL() : (img ? img.src : '');
+
+  const win = window.open('', '_blank');
+  win.document.write(`
+    <!DOCTYPE html><html><head>
+    <meta charset="UTF-8">
+    <style>
+      body { margin: 0; display: flex; justify-content: center; align-items: flex-start; padding: 10px; font-family: sans-serif; }
+      .label { border: 2px solid #000; border-radius: 10px; padding: 16px; text-align: center; width: 220px; }
+      .label-name { font-size: 14px; font-weight: 700; margin-bottom: 4px; }
+      .label-style { font-size: 11px; color: #555; margin-bottom: 10px; font-family: monospace; }
+      .label-qr img { width: 160px; height: 160px; }
+      .label-loc { font-size: 22px; font-weight: 700; letter-spacing: 2px; margin-top: 10px; background: #1a6cff; color: #fff; padding: 4px 14px; border-radius: 6px; display: inline-block; }
+      .label-footer { font-size: 10px; color: #888; margin-top: 8px; }
+      @media print { @page { margin: 5mm; } }
+    </style>
+    </head><body>
+    <div class="label">
+      <div class="label-name">${item.name}</div>
+      <div class="label-style">${item.style}${item.note ? ' · ' + item.note : ''}</div>
+      <div class="label-qr"><img src="${qrSrc}"></div>
+      <div class="label-loc">${item.loc}</div>
+      <div class="label-footer">库存管理系统 · ${new Date().toLocaleDateString('zh-CN')}</div>
+    </div>
+    <script>window.onload=()=>{window.print();}<\/script>
+    </body></html>
+  `);
+  win.document.close();
+}
+
+// ── QR Scan Out ───────────────────────────────────────
+let scanOutItem = null;
+
+function startQRScanOut() {
+  scanTarget = '__qr_out__';
+  startScan('__qr_out__');
+}
+
+function closeScanConfirm() {
+  document.getElementById('scan-confirm').classList.remove('show');
+  scanOutItem = null;
+}
+
+function confirmScanOut() {
+  if (!scanOutItem) return;
+  const qty = parseInt(document.getElementById('sc-qty').value);
+  if (!qty || qty < 1) { showToast(t('toastEnterQty'), 'error'); return; }
+  const item = db.items.find(i => i.id === scanOutItem.id);
+  if (!item) { showToast(t('noResults'), 'error'); return; }
+  if (item.qty !== '' && Number(item.qty) < qty) { showToast(t('toastOverStock'), 'error'); return; }
+  if (item.qty !== '') item.qty = String(Number(item.qty) - qty);
+  db.logs.unshift({ time: new Date().toISOString(), type: 'out', itemName: item.name, style: item.style, loc: item.loc, qty, orderNo: t('scanOutTitle') });
+  save();
+  closeScanConfirm();
+  showToast(t('toastScanConfirmOk', {qty, name: item.name}), 'success');
+}
+
+// ── Add item ──────────────────────────────────────────
+function addItem() {
+  const name  = document.getElementById('add-name').value.trim();
+  const style = document.getElementById('add-style').value.trim();
+  const loc   = document.getElementById('add-loc').value.trim();
+  const qty   = document.getElementById('add-qty').value.trim();
+  const warn  = document.getElementById('add-warn').value.trim();
+  const note  = document.getElementById('add-note').value.trim();
+  if (!name || !style || !loc) { showToast(t('toastFillRequired'), 'error'); return; }
+  if (db.items.find(i => i.style.toLowerCase() === style.toLowerCase())) { showToast(t('toastStyleExists'), 'error'); return; }
+  db.items.push({ id: Date.now(), name, style, loc: loc.toUpperCase(), qty: qty||'', warnQty: warn||'', note });
+  save();
+  ['add-name','add-style','add-loc','add-qty','add-warn','add-note'].forEach(id => document.getElementById(id).value = '');
+  showToast(t('toastAddOk', {name}), 'success');
+}
+
+function batchImport() {
+  const raw = document.getElementById('batch-input').value.trim();
+  if (!raw) return;
+  let count = 0;
+  raw.split('\n').filter(l => l.trim()).forEach(line => {
+    const [name, style, loc, qty] = line.split(',').map(s => s.trim());
+    if (!name || !style || !loc) return;
+    if (db.items.find(i => i.style.toLowerCase() === style.toLowerCase())) return;
+    db.items.push({ id: Date.now() + Math.random(), name, style, loc: loc.toUpperCase(), qty: qty||'', warnQty:'', note:'' });
+    count++;
+  });
+  save(); document.getElementById('batch-input').value = '';
+  showToast(t('toastBatchOk', {count}), 'success');
+}
+
+// ── Stock ─────────────────────────────────────────────
+function renderStock() {
+  const q = document.getElementById('stock-search').value.trim().toLowerCase();
+  let items = db.items;
+  if (q) items = items.filter(i => i.name.toLowerCase().includes(q) || i.style.toLowerCase().includes(q) || i.loc.toLowerCase().includes(q));
+  const list = document.getElementById('stock-list');
+  if (!items.length) {
+    const [l1, l2] = t('emptyStock').split('\n');
+    list.innerHTML = `<div class="empty"><div class="empty-icon">📭</div><div class="empty-text">${l1}<br>${l2||''}</div></div>`; return;
+  }
+  list.innerHTML = items.map(item => {
+    const low = item.qty !== '' && item.warnQty !== '' && Number(item.qty) <= Number(item.warnQty);
+    return `
+    <div class="card">
+      <div class="card-header">
+        <div style="flex:1">
+          <div class="item-name">${item.name}</div>
+          <div class="item-style">${item.style}${item.note ? ' · ' + item.note : ''}</div>
+        </div>
+        <div class="location-badge">${item.loc}</div>
+      </div>
+      <div class="card-meta">
+        <span class="meta-tag qty">${item.qty !== '' ? t('stockQty',{qty:item.qty}) : t('stockQtyEmpty')}</span>
+        ${low ? `<span class="meta-tag warn">${t('lowStock')}</span>` : ''}
+        ${item.warnQty ? `<span class="meta-tag">${t('warnVal',{qty:item.warnQty})}</span>` : ''}
+      </div>
+      <div class="card-actions">
+        <button class="btn btn-ghost" onclick="editQty(${item.id})" style="font-size:12px">${t('btnEditQty')}</button>
+        <button class="btn btn-ghost" onclick="editLoc(${item.id})" style="font-size:12px">${t('btnEditLoc')}</button>
+        <button class="btn btn-purple" onclick="showQR(${item.id})" style="font-size:12px">${t('btnQR')}</button>
+        <button class="btn btn-danger" onclick="deleteItem(${item.id})" style="font-size:12px">${t('btnDelete')}</button>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function editQty(id) {
+  const item = db.items.find(i => i.id === id); if (!item) return;
+  const val = prompt(t('editQtyPrompt', {name: item.name, qty: item.qty || t('notRecorded')}));
+  if (val === null) return; item.qty = val.trim(); save(); renderStock(); showToast(t('toastQtyUpdated'), 'success');
+}
+function editLoc(id) {
+  const item = db.items.find(i => i.id === id); if (!item) return;
+  const val = prompt(t('editLocPrompt', {name: item.name, loc: item.loc}));
+  if (!val || !val.trim()) return; item.loc = val.trim().toUpperCase(); save(); renderStock(); showToast(t('toastLocUpdated'), 'success');
+}
+function deleteItem(id) {
+  const item = db.items.find(i => i.id === id); if (!item) return;
+  if (!confirm(t('deleteConfirm', {name: item.name}))) return;
+  db.items = db.items.filter(i => i.id !== id); save(); renderStock(); showToast(t('toastDeleted'));
+}
+
+// ── Export CSV ────────────────────────────────────────
+function exportCSV() {
+  if (!db.items.length) { showToast(t('toastNoData'), 'error'); return; }
+  const header = 'Name,Style,Location,Stock,LowStockAlert,Notes';
+  const rows = db.items.map(i => `${i.name},${i.style},${i.loc},${i.qty},${i.warnQty},${i.note}`);
+  const csv = '\uFEFF' + [header, ...rows].join('\n');
+  const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  const date = new Date().toLocaleDateString('zh-CN').replace(/\//g,'-');
+  a.href = url; a.download = t('csvFilename', {date});
+  a.click(); URL.revokeObjectURL(url);
+  showToast(t('toastExportOk'), 'success');
+}
+
+// ── Log ───────────────────────────────────────────────
+function renderLog() {
+  const typeFilter = document.getElementById('log-type-filter').value;
+  const dateFilter = document.getElementById('log-date-filter').value;
+  const now = new Date();
+  let logs = db.logs.filter(l => {
+    if (typeFilter !== 'all' && l.type !== typeFilter) return false;
+    const d = new Date(l.time);
+    if (dateFilter === 'today') return d.toDateString() === now.toDateString();
+    if (dateFilter === 'week') {
+      const start = new Date(now); start.setDate(now.getDate() - now.getDay());
+      return d >= start;
+    }
+    if (dateFilter === 'month') return d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear();
+    return true;
+  });
+
+  const list = document.getElementById('log-list');
+  if (!logs.length) {
+    list.innerHTML = `<div class="empty"><div class="empty-icon">📋</div><div class="empty-text">${t('emptyLog')}</div></div>`; return;
+  }
+  let html = '<div class="card">';
+  logs.slice(0, 100).forEach(log => {
+    const d = new Date(log.time);
+    const tm = d.toLocaleDateString('zh-CN',{month:'2-digit',day:'2-digit'}) + ' ' + d.toTimeString().slice(0,5);
+    const typeLabel = log.type === 'in' ? t('filterIn') : t('filterOut');
+    html += `
+    <div class="log-entry">
+      <div class="log-dot ${log.type}"></div>
+      <div class="log-content">
+        <div class="log-title">${log.itemName} <span class="highlight">× ${log.qty}</span>
+          <span class="log-type ${log.type}">${typeLabel}</span>
+        </div>
+        <div class="log-meta">${log.style} · ${log.loc}${log.orderNo ? ' · ' + log.orderNo : ''} · ${tm}</div>
+      </div>
+    </div>`;
+  });
+  html += '</div>';
+  if (db.logs.length > 0) {
+    html += `<button class="btn btn-danger btn-full" style="margin-top:8px" onclick="clearLog()">${t('clearLogBtn')}</button>`;
+  }
+  list.innerHTML = html;
+}
+
+function clearLog() {
+  if (!confirm(t('clearLogConfirm'))) return;
+  db.logs = []; save(); renderLog();
+}
+
+// ── Scanner ───────────────────────────────────────────
+async function startScan(targetId) {
+  scanTarget = targetId;
+  if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+    showToast(t('toastNoCameraAPI'), 'error'); return;
+  }
+  try {
+    const modal = document.getElementById('scan-modal');
+    modal.style.display = 'flex';
+    scanStream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } });
+    const video = document.getElementById('scan-video');
+    video.srcObject = scanStream; video.play();
+    // Simple barcode detection via BarcodeDetector API if available
+    if ('BarcodeDetector' in window) {
+      const detector = new BarcodeDetector();
+      const scan = async () => {
+        if (!scanStream) return;
+        try {
+          const codes = await detector.detect(video);
+          if (codes.length > 0) {
+            const val = codes[0].rawValue;
+            stopScan();
+            // 判断是否是WMS二维码（JSON格式）
+            if (scanTarget === '__qr_out__') {
+              try {
+                const data = JSON.parse(val);
+                if (data.id && data.style) {
+                  const item = db.items.find(i => i.id === data.id || i.style.toLowerCase() === data.style.toLowerCase());
+                  if (item) {
+                    scanOutItem = item;
+                    document.getElementById('sc-name').textContent = item.name;
+                    document.getElementById('sc-meta').textContent = t('scMeta', {style: item.style, qty: item.qty || t('notRecorded')});
+                    document.getElementById('sc-loc').textContent = item.loc;
+                    document.getElementById('sc-qty').value = '';
+                    document.getElementById('scan-confirm').classList.add('show');
+                    setTimeout(() => document.getElementById('sc-qty').focus(), 300);
+                    return;
+                  }
+                }
+              } catch(e) {}
+              showToast(t('toastScanFail'), 'error');
+              return;
+            }
+            document.getElementById(scanTarget).value = val;
+            showToast(t('toastScanOk', {val}), 'success');
+            if (scanTarget === 'find-input') findItems();
+            return;
+          }
+        } catch(e) {}
+        requestAnimationFrame(scan);
+      };
+      scan();
+    } else {
+      showToast(t('toastNoBarcodeAPI'), 'error');
+      setTimeout(stopScan, 2000);
+    }
+  } catch(e) {
+    showToast(t('toastCameraFail'), 'error');
+    document.getElementById('scan-modal').style.display = 'none';
+  }
+}
+
+function stopScan() {
+  if (scanStream) { scanStream.getTracks().forEach(t => t.stop()); scanStream = null; }
+  document.getElementById('scan-modal').style.display = 'none';
+}
+
+// ── Init ──────────────────────────────────────────────
+updateStats();
+setLang(currentLang);
+</script>
+</body>
+</html>
