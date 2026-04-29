@@ -1,0 +1,749 @@
+<!DOCTYPE html>
+<!-- saved from url=(0042)file:///Users/jiangshen/Downloads/wms.html -->
+<html lang="zh-CN"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>仓储管理系统</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@300;400;500;700&family=JetBrains+Mono:wght@400;600&display=swap');
+
+  :root {
+    --bg: #0f1117;
+    --surface: #1a1d27;
+    --surface2: #22263a;
+    --border: #2e3350;
+    --accent: #4f8cff;
+    --accent2: #00e5b0;
+    --warn: #ffb84f;
+    --danger: #ff5f6d;
+    --text: #e8eaf6;
+    --text2: #8891b4;
+    --text3: #4a5080;
+    --radius: 14px;
+    --shadow: 0 4px 24px rgba(0,0,0,0.4);
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+
+  body {
+    font-family: 'Noto Sans SC', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    max-width: 480px;
+    margin: 0 auto;
+    padding-bottom: 80px;
+  }
+
+  /* Header */
+  .header {
+    background: var(--surface);
+    border-bottom: 1px solid var(--border);
+    padding: 16px 20px 12px;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+  }
+  .header-top {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 12px;
+  }
+  .logo {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--accent);
+    letter-spacing: 2px;
+    text-transform: uppercase;
+  }
+  .logo span { color: var(--accent2); }
+  .stats-row {
+    display: flex;
+    gap: 12px;
+  }
+  .stat-chip {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 20px;
+    padding: 4px 12px;
+    font-size: 11px;
+    color: var(--text2);
+  }
+  .stat-chip b { color: var(--accent2); font-weight: 600; }
+
+  /* Tabs */
+  .tabs {
+    display: flex;
+    background: var(--surface);
+    border-bottom: 1px solid var(--border);
+    position: sticky;
+    top: 73px;
+    z-index: 99;
+  }
+  .tab {
+    flex: 1;
+    padding: 10px 4px;
+    text-align: center;
+    font-size: 12px;
+    color: var(--text3);
+    cursor: pointer;
+    border-bottom: 2px solid transparent;
+    transition: all 0.2s;
+    user-select: none;
+  }
+  .tab.active {
+    color: var(--accent);
+    border-bottom-color: var(--accent);
+    font-weight: 500;
+  }
+  .tab-icon { font-size: 16px; display: block; margin-bottom: 2px; }
+
+  /* Pages */
+  .page { display: none; padding: 16px; }
+  .page.active { display: block; }
+
+  /* Section title */
+  .section-title {
+    font-size: 11px;
+    font-weight: 500;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: var(--text3);
+    margin: 20px 0 10px;
+    font-family: 'JetBrains Mono', monospace;
+  }
+  .section-title:first-child { margin-top: 0; }
+
+  /* Cards */
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 16px;
+    margin-bottom: 10px;
+  }
+  .card-header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    margin-bottom: 10px;
+  }
+  .item-name {
+    font-size: 15px;
+    font-weight: 500;
+    color: var(--text);
+    line-height: 1.3;
+    flex: 1;
+  }
+  .item-style {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    color: var(--text3);
+    margin-top: 3px;
+  }
+  .location-badge {
+    background: var(--accent);
+    color: #fff;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 13px;
+    font-weight: 600;
+    padding: 4px 10px;
+    border-radius: 8px;
+    white-space: nowrap;
+    margin-left: 10px;
+  }
+  .card-meta {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+  }
+  .meta-tag {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 3px 8px;
+    font-size: 11px;
+    color: var(--text2);
+  }
+  .meta-tag.qty { color: var(--accent2); border-color: rgba(0,229,176,0.3); }
+  .meta-tag.warn { color: var(--warn); border-color: rgba(255,184,79,0.3); }
+  .card-actions {
+    display: flex;
+    gap: 8px;
+    margin-top: 12px;
+  }
+
+  /* Inputs */
+  .input-group { margin-bottom: 12px; }
+  .input-label {
+    font-size: 11px;
+    color: var(--text2);
+    margin-bottom: 6px;
+    display: block;
+    letter-spacing: 0.5px;
+  }
+  input, select, textarea {
+    width: 100%;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 11px 14px;
+    font-size: 14px;
+    color: var(--text);
+    font-family: 'Noto Sans SC', sans-serif;
+    outline: none;
+    transition: border-color 0.2s;
+    -webkit-appearance: none;
+  }
+  input:focus, select:focus, textarea:focus {
+    border-color: var(--accent);
+  }
+  input::placeholder { color: var(--text3); }
+  select option { background: var(--surface2); }
+
+  /* Buttons */
+  .btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    padding: 10px 16px;
+    border-radius: 10px;
+    font-size: 13px;
+    font-weight: 500;
+    cursor: pointer;
+    border: none;
+    font-family: 'Noto Sans SC', sans-serif;
+    transition: all 0.15s;
+    user-select: none;
+    white-space: nowrap;
+  }
+  .btn:active { transform: scale(0.96); }
+  .btn-primary { background: var(--accent); color: #fff; flex: 1; }
+  .btn-primary:active { background: #3a7aef; }
+  .btn-success { background: rgba(0,229,176,0.15); color: var(--accent2); border: 1px solid rgba(0,229,176,0.3); }
+  .btn-danger { background: rgba(255,95,109,0.12); color: var(--danger); border: 1px solid rgba(255,95,109,0.25); }
+  .btn-ghost { background: var(--surface2); color: var(--text2); border: 1px solid var(--border); }
+  .btn-full { width: 100%; padding: 13px; font-size: 15px; border-radius: 12px; }
+
+  /* Search bar */
+  .search-wrap { position: relative; margin-bottom: 14px; }
+  .search-wrap input { padding-left: 40px; font-size: 14px; }
+  .search-icon {
+    position: absolute;
+    left: 14px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: var(--text3);
+    font-size: 16px;
+    pointer-events: none;
+  }
+
+  /* Order result */
+  .order-result {
+    background: linear-gradient(135deg, rgba(79,140,255,0.08), rgba(0,229,176,0.06));
+    border: 1px solid rgba(79,140,255,0.3);
+    border-radius: var(--radius);
+    padding: 16px;
+    margin-bottom: 10px;
+  }
+  .order-result .item-name { font-size: 14px; }
+  .location-big {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 28px;
+    font-weight: 600;
+    color: var(--accent);
+    text-align: center;
+    padding: 12px 0 8px;
+    letter-spacing: 3px;
+  }
+  .location-label {
+    text-align: center;
+    font-size: 11px;
+    color: var(--text3);
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    margin-bottom: 10px;
+  }
+  .qty-input-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-top: 10px;
+  }
+  .qty-input-row input {
+    width: 80px;
+    text-align: center;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 16px;
+  }
+
+  /* Empty state */
+  .empty {
+    text-align: center;
+    padding: 40px 20px;
+    color: var(--text3);
+  }
+  .empty-icon { font-size: 40px; margin-bottom: 12px; }
+  .empty-text { font-size: 13px; line-height: 1.6; }
+
+  /* Toast */
+  .toast {
+    position: fixed;
+    bottom: 90px;
+    left: 50%;
+    transform: translateX(-50%) translateY(20px);
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 24px;
+    padding: 10px 20px;
+    font-size: 13px;
+    color: var(--text);
+    box-shadow: var(--shadow);
+    opacity: 0;
+    transition: all 0.3s;
+    white-space: nowrap;
+    z-index: 999;
+    pointer-events: none;
+  }
+  .toast.show {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0);
+  }
+  .toast.success { border-color: rgba(0,229,176,0.5); color: var(--accent2); }
+  .toast.error { border-color: rgba(255,95,109,0.5); color: var(--danger); }
+
+  /* Log entries */
+  .log-entry {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    padding: 12px 0;
+    border-bottom: 1px solid var(--border);
+  }
+  .log-entry:last-child { border-bottom: none; }
+  .log-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: var(--accent2);
+    margin-top: 5px;
+    flex-shrink: 0;
+  }
+  .log-content { flex: 1; }
+  .log-title { font-size: 13px; color: var(--text); }
+  .log-meta { font-size: 11px; color: var(--text3); margin-top: 3px; font-family: 'JetBrains Mono', monospace; }
+
+  /* Divider */
+  .divider { height: 1px; background: var(--border); margin: 16px 0; }
+
+  /* Bottom nav */
+  .bottom-nav {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    max-width: 480px;
+    margin: 0 auto;
+    background: var(--surface);
+    border-top: 1px solid var(--border);
+    display: flex;
+    z-index: 100;
+  }
+  .nav-item {
+    flex: 1;
+    padding: 10px 4px 14px;
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.2s;
+    user-select: none;
+  }
+  .nav-icon { font-size: 20px; display: block; }
+  .nav-label { font-size: 10px; color: var(--text3); margin-top: 3px; }
+  .nav-item.active .nav-label { color: var(--accent); }
+
+  .row2 { display: flex; gap: 8px; }
+  .row2 .input-group { flex: 1; }
+
+  .highlight { color: var(--accent2); font-weight: 500; }
+  .no-results { text-align: center; padding: 30px; color: var(--text3); font-size: 13px; }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div class="header-top">
+    <div class="logo">WMS <span>·</span> 仓储系统</div>
+    <div style="font-size:11px;color:var(--text3);font-family:&#39;JetBrains Mono&#39;,monospace" id="clock">04/28 22:28</div>
+  </div>
+  <div class="stats-row">
+    <div class="stat-chip">库存品类 <b id="stat-items">0</b></div>
+    <div class="stat-chip">今日出货 <b id="stat-out">0</b></div>
+    <div class="stat-chip">低库存 <b id="stat-low" style="color:var(--warn)">0</b></div>
+  </div>
+</div>
+
+<!-- Pages -->
+<div id="page-find" class="page active">
+  <div class="section-title">📦 订单查货</div>
+  <div class="search-wrap">
+    <span class="search-icon">🔍</span>
+    <input type="text" id="find-input" placeholder="输入 Style 编号或商品名..." oninput="findItems()">
+  </div>
+  <div id="find-results"></div>
+</div>
+
+<div id="page-stock" class="page">
+  <div class="section-title">🗄 库存总览</div>
+  <div class="search-wrap">
+    <span class="search-icon">🔍</span>
+    <input type="text" id="stock-search" placeholder="搜索商品..." oninput="renderStock()">
+  </div>
+  <div id="stock-list"></div>
+</div>
+
+<div id="page-add" class="page">
+  <div class="section-title">➕ 录入货品</div>
+  <div class="card">
+    <div class="input-group">
+      <label class="input-label">商品名称 *</label>
+      <input type="text" id="add-name" placeholder="如：女款连衣裙 春季款">
+    </div>
+    <div class="row2">
+      <div class="input-group">
+        <label class="input-label">Style 编号 *</label>
+        <input type="text" id="add-style" placeholder="如：DR-2401">
+      </div>
+      <div class="input-group">
+        <label class="input-label">货架位置 *</label>
+        <input type="text" id="add-loc" placeholder="如：A-03-2">
+      </div>
+    </div>
+    <div class="row2">
+      <div class="input-group">
+        <label class="input-label">库存数量</label>
+        <input type="number" id="add-qty" placeholder="0" min="0">
+      </div>
+      <div class="input-group">
+        <label class="input-label">低库存预警</label>
+        <input type="number" id="add-warn" placeholder="10" min="0">
+      </div>
+    </div>
+    <div class="input-group">
+      <label class="input-label">备注（颜色/尺码等）</label>
+      <input type="text" id="add-note" placeholder="可选">
+    </div>
+    <button class="btn btn-primary btn-full" onclick="addItem()">✓ 保存录入</button>
+  </div>
+
+  <div class="section-title">📝 批量导入（每行一条）</div>
+  <div class="card">
+    <div class="input-group">
+      <label class="input-label">格式：商品名, Style编号, 货架位置, 数量</label>
+      <textarea id="batch-input" rows="5" placeholder="女款连衣裙,DR-2401,A-03-2,50
+男款衬衫,SH-1105,B-01-1,30
+休闲裤,PT-0812,C-02-4,45"></textarea>
+    </div>
+    <button class="btn btn-ghost btn-full" onclick="batchImport()">⬆ 批量导入</button>
+  </div>
+</div>
+
+<div id="page-log" class="page">
+  <div class="section-title">📋 出货记录</div>
+  <div id="log-list"></div>
+</div>
+
+<!-- Bottom Nav -->
+<div class="bottom-nav">
+  <div class="nav-item active" onclick="switchTab(&#39;find&#39;, this)">
+    <span class="nav-icon">🔍</span>
+    <div class="nav-label">查货</div>
+  </div>
+  <div class="nav-item" onclick="switchTab(&#39;stock&#39;, this)">
+    <span class="nav-icon">📦</span>
+    <div class="nav-label">库存</div>
+  </div>
+  <div class="nav-item" onclick="switchTab(&#39;add&#39;, this)">
+    <span class="nav-icon">➕</span>
+    <div class="nav-label">录入</div>
+  </div>
+  <div class="nav-item" onclick="switchTab(&#39;log&#39;, this)">
+    <span class="nav-icon">📋</span>
+    <div class="nav-label">记录</div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+// ── 数据层 ──────────────────────────────────────────
+let db = JSON.parse(localStorage.getItem('wms_db') || '{"items":[],"logs":[]}');
+
+function save() {
+  localStorage.setItem('wms_db', JSON.stringify(db));
+  updateStats();
+}
+
+function updateStats() {
+  document.getElementById('stat-items').textContent = db.items.length;
+  const today = new Date().toDateString();
+  document.getElementById('stat-out').textContent =
+    db.logs.filter(l => new Date(l.time).toDateString() === today).length;
+  document.getElementById('stat-low').textContent =
+    db.items.filter(i => i.qty !== '' && i.warnQty !== '' && Number(i.qty) <= Number(i.warnQty)).length;
+}
+
+// ── 时钟 ─────────────────────────────────────────────
+function tick() {
+  const now = new Date();
+  document.getElementById('clock').textContent =
+    now.toLocaleDateString('zh-CN',{month:'2-digit',day:'2-digit'}) + ' ' +
+    now.toTimeString().slice(0,5);
+}
+tick(); setInterval(tick, 10000);
+
+// ── Tab 切换 ─────────────────────────────────────────
+function switchTab(name, el) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+  document.getElementById('page-' + name).classList.add('active');
+  el.classList.add('active');
+  if (name === 'stock') renderStock();
+  if (name === 'log') renderLog();
+}
+
+// ── Toast ────────────────────────────────────────────
+function showToast(msg, type = '') {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.className = 'toast show ' + type;
+  setTimeout(() => t.className = 'toast', 2000);
+}
+
+// ── 录入货品 ─────────────────────────────────────────
+function addItem() {
+  const name  = document.getElementById('add-name').value.trim();
+  const style = document.getElementById('add-style').value.trim();
+  const loc   = document.getElementById('add-loc').value.trim();
+  const qty   = document.getElementById('add-qty').value.trim();
+  const warn  = document.getElementById('add-warn').value.trim();
+  const note  = document.getElementById('add-note').value.trim();
+
+  if (!name || !style || !loc) { showToast('请填写商品名、编号和货架位置', 'error'); return; }
+
+  // 检查重复 style
+  const exists = db.items.find(i => i.style.toLowerCase() === style.toLowerCase());
+  if (exists) { showToast('该 Style 编号已存在，请先在库存中编辑', 'error'); return; }
+
+  db.items.push({ id: Date.now(), name, style, loc, qty: qty||'', warnQty: warn||'', note });
+  save();
+  ['add-name','add-style','add-loc','add-qty','add-warn','add-note'].forEach(id => document.getElementById(id).value = '');
+  showToast('✓ 录入成功：' + name, 'success');
+}
+
+// ── 批量导入 ─────────────────────────────────────────
+function batchImport() {
+  const raw = document.getElementById('batch-input').value.trim();
+  if (!raw) return;
+  const lines = raw.split('\n').filter(l => l.trim());
+  let count = 0;
+  lines.forEach(line => {
+    const parts = line.split(',').map(s => s.trim());
+    if (parts.length < 3) return;
+    const [name, style, loc, qty] = parts;
+    if (!name || !style || !loc) return;
+    if (db.items.find(i => i.style.toLowerCase() === style.toLowerCase())) return;
+    db.items.push({ id: Date.now() + Math.random(), name, style, loc, qty: qty||'', warnQty:'', note:'' });
+    count++;
+  });
+  save();
+  document.getElementById('batch-input').value = '';
+  showToast(`✓ 成功导入 ${count} 条`, 'success');
+}
+
+// ── 查货 ─────────────────────────────────────────────
+function findItems() {
+  const q = document.getElementById('find-input').value.trim().toLowerCase();
+  const box = document.getElementById('find-results');
+  if (!q) { box.innerHTML = ''; return; }
+
+  const results = db.items.filter(i =>
+    i.style.toLowerCase().includes(q) ||
+    i.name.toLowerCase().includes(q) ||
+    i.loc.toLowerCase().includes(q)
+  );
+
+  if (!results.length) {
+    box.innerHTML = '<div class="no-results">未找到匹配货品<br><span style="font-size:11px">检查 Style 编号或商品名</span></div>';
+    return;
+  }
+
+  box.innerHTML = results.map(item => {
+    const low = item.qty !== '' && item.warnQty !== '' && Number(item.qty) <= Number(item.warnQty);
+    return `
+    <div class="order-result">
+      <div class="card-header">
+        <div>
+          <div class="item-name">${item.name}</div>
+          <div class="item-style">${item.style}${item.note ? ' · ' + item.note : ''}</div>
+        </div>
+      </div>
+      <div class="location-big">${item.loc}</div>
+      <div class="location-label">货架位置</div>
+      <div class="card-meta">
+        <span class="meta-tag qty">库存 ${item.qty !== '' ? item.qty + ' 件' : '未录入'}</span>
+        ${low ? '<span class="meta-tag warn">⚠ 库存偏低</span>' : ''}
+      </div>
+      <div class="qty-input-row">
+        <input type="number" id="out-qty-${item.id}" placeholder="出货数" min="1" style="flex:1">
+        <button class="btn btn-success" onclick="shipOut(${item.id})">✓ 出货</button>
+        <button class="btn btn-ghost" onclick="copyLoc('${item.loc}')">📋</button>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function copyLoc(loc) {
+  navigator.clipboard.writeText(loc).then(() => showToast('已复制：' + loc, 'success'));
+}
+
+function shipOut(id) {
+  const item = db.items.find(i => i.id === id);
+  if (!item) return;
+  const qtyEl = document.getElementById('out-qty-' + id);
+  const qty = parseInt(qtyEl.value);
+  if (!qty || qty < 1) { showToast('请输入出货数量', 'error'); return; }
+
+  if (item.qty !== '') {
+    const newQty = Number(item.qty) - qty;
+    if (newQty < 0) { showToast('出货数量超过库存', 'error'); return; }
+    item.qty = String(newQty);
+  }
+
+  db.logs.unshift({
+    time: new Date().toISOString(),
+    itemName: item.name,
+    style: item.style,
+    loc: item.loc,
+    qty
+  });
+
+  save();
+  qtyEl.value = '';
+  findItems();
+  showToast(`✓ 出货 ${qty} 件：${item.name}`, 'success');
+}
+
+// ── 库存总览 ─────────────────────────────────────────
+function renderStock() {
+  const q = document.getElementById('stock-search').value.trim().toLowerCase();
+  const list = document.getElementById('stock-list');
+  let items = db.items;
+  if (q) items = items.filter(i => i.name.toLowerCase().includes(q) || i.style.toLowerCase().includes(q) || i.loc.toLowerCase().includes(q));
+
+  if (!items.length) {
+    list.innerHTML = '<div class="empty"><div class="empty-icon">📭</div><div class="empty-text">暂无库存数据<br>前往"录入"添加货品</div></div>';
+    return;
+  }
+
+  list.innerHTML = items.map(item => {
+    const low = item.qty !== '' && item.warnQty !== '' && Number(item.qty) <= Number(item.warnQty);
+    return `
+    <div class="card">
+      <div class="card-header">
+        <div style="flex:1">
+          <div class="item-name">${item.name}</div>
+          <div class="item-style">${item.style}${item.note ? ' · ' + item.note : ''}</div>
+        </div>
+        <div class="location-badge">${item.loc}</div>
+      </div>
+      <div class="card-meta">
+        <span class="meta-tag qty">库存 ${item.qty !== '' ? item.qty + ' 件' : '—'}</span>
+        ${low ? '<span class="meta-tag warn">⚠ 低库存</span>' : ''}
+        ${item.warnQty ? '<span class="meta-tag">预警 ' + item.warnQty + '</span>' : ''}
+      </div>
+      <div class="card-actions">
+        <button class="btn btn-ghost" onclick="editQty(${item.id})">修改库存</button>
+        <button class="btn btn-ghost" onclick="editLoc(${item.id})">修改位置</button>
+        <button class="btn btn-danger" onclick="deleteItem(${item.id})">删除</button>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function editQty(id) {
+  const item = db.items.find(i => i.id === id);
+  if (!item) return;
+  const val = prompt(`修改"${item.name}"的库存数量（当前：${item.qty || '未录入'}）`);
+  if (val === null) return;
+  item.qty = val.trim();
+  save();
+  renderStock();
+  showToast('✓ 库存已更新', 'success');
+}
+
+function editLoc(id) {
+  const item = db.items.find(i => i.id === id);
+  if (!item) return;
+  const val = prompt(`修改"${item.name}"的货架位置（当前：${item.loc}）`);
+  if (val === null || !val.trim()) return;
+  item.loc = val.trim().toUpperCase();
+  save();
+  renderStock();
+  showToast('✓ 位置已更新', 'success');
+}
+
+function deleteItem(id) {
+  const item = db.items.find(i => i.id === id);
+  if (!item) return;
+  if (!confirm(`确认删除"${item.name}"？`)) return;
+  db.items = db.items.filter(i => i.id !== id);
+  save();
+  renderStock();
+  showToast('已删除', '');
+}
+
+// ── 出货记录 ─────────────────────────────────────────
+function renderLog() {
+  const list = document.getElementById('log-list');
+  if (!db.logs.length) {
+    list.innerHTML = '<div class="empty"><div class="empty-icon">📋</div><div class="empty-text">暂无出货记录</div></div>';
+    return;
+  }
+
+  let html = '<div class="card">';
+  db.logs.slice(0, 50).forEach(log => {
+    const d = new Date(log.time);
+    const timeStr = d.toLocaleDateString('zh-CN',{month:'2-digit',day:'2-digit'}) + ' ' + d.toTimeString().slice(0,5);
+    html += `
+    <div class="log-entry">
+      <div class="log-dot"></div>
+      <div class="log-content">
+        <div class="log-title">${log.itemName} <span class="highlight">× ${log.qty}</span></div>
+        <div class="log-meta">${log.style} · ${log.loc} · ${timeStr}</div>
+      </div>
+    </div>`;
+  });
+  html += '</div>';
+
+  if (db.logs.length > 0) {
+    html += `<button class="btn btn-danger btn-full" style="margin-top:8px" onclick="clearLog()">清空记录</button>`;
+  }
+  list.innerHTML = html;
+}
+
+function clearLog() {
+  if (!confirm('确认清空所有出货记录？')) return;
+  db.logs = [];
+  save();
+  renderLog();
+}
+
+// ── 初始化 ────────────────────────────────────────────
+updateStats();
+</script>
+
+
+</body></html>
